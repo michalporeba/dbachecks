@@ -134,6 +134,9 @@ Set-PSFConfig -Module dbachecks -name policy.ola.DeleteBackupHistoryscheduled -V
 Set-PSFConfig -Module dbachecks -name policy.ola.PurgeJobHistoryenabled -Validation bool -Value $true -Initialize -Description "Ola's Purge Job History should be enabled `$true or disabled `$false"
 Set-PSFConfig -Module dbachecks -name policy.ola.PurgeJobHistoryscheduled -Validation bool -Value $true -Initialize -Description "Ola's Purge Job History should be scheduled `$true or disabled `$false"
 
+Set-PSFConfig -Module dbachecks -name policy.frk.database -Validation string -Value 'master' -Initialize -Description "The database where the First Responder Kit is installed"
+Set-PSFConfig -Module dbachecks -Name policy.frk.usewheninstalled -Validation bool -Value $true -Initialize -Description "Use FRK checks if possible"
+
 # xevents
 Set-PSFConfig -Module dbachecks -Name policy.xevent.validrunningsession -Value $null -Initialize -Description "List of XE Sessions that can be be running."
 Set-PSFConfig -Module dbachecks -Name policy.xevent.requiredrunningsession -Value $null -Initialize -Description "List of XE Sessions that should be running."
@@ -186,7 +189,6 @@ Set-PSFConfig -Module dbachecks -Name mail.smtpserver -Value $null -Validation s
 Set-PSFConfig -Module dbachecks -Name mail.to -Value $null -Validation validation.EmailValidation -Initialize -Description "Email address to send the report to"
 Set-PSFConfig -Module dbachecks -Name mail.from  -Value $null -Validation validation.EmailValidation -Initialize -Description "Email address the email reports should come from"
 Set-PSFConfig -Module dbachecks -Name mail.subject  -Value 'dbachecks results' -Validation String -Initialize -Description "Subject line of the email report"
-
 
 # Command parameter default values
 Set-PSFConfig -Module dbachecks -Name command.invokedbccheck.excludecheck -Value @() -Initialize -Description "Invoke-DbcCheck: The checks that should be skipped by default."
