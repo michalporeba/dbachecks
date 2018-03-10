@@ -1,5 +1,3 @@
-. "$PSScriptRoot/Invoke-QueryOnConnectedInstance.ps1"
-
 function Get-FrkVersion {
     param (
         [DbaInstanceParameter]$SqlInstance
