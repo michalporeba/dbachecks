@@ -8,12 +8,32 @@ function Get-DatabaseInfo {
         }
     }
     process {
-        foreach ($instance in $SqlInstance) {
-            try {
-                if (!($script:results.ContainsKey($instance))) {
-                    $server = Connect-DbaInstance -SqlInstance $instance -SqlCredential $sqlcredential
+        $sql2000 = "
+select d.name                           [Database]
+    ,''														                    DatabaseCollation
+    ,''																            Owner
+    ,''															                RecoveryModel
+    ,convert(bit, case when 1 = 1 & [status] then 1 else 0 end)				    AutoClose
+    ,convert(bit, 0)													        AutoCreateStatistics
+    ,convert(bit, case when 4194304 = 4194304 & [status] then 1 else 0 end)		AutoShrink
+    ,convert(bit, 0)														    AutoUpdateStatistics
+    ,convert(bit, 0)														    AutoUpdateStatisticsAsynchronously
+    ,case
+		when 16 = 16 & [status] then 'TORN_PAGE_DETECTION'
+		when 65536 = 65536 & [status] then 'CHECKSUM'
+		else 'NONE'
+	end 																		PageVerify
+    ,0																			SuspectPages
+    ,convert(bit, 0)															Status
+    ,''															                Trustworthy   
+    ,'80'															            CompatibilityLevel
+    ,''																            UserAccess
+    ,convert(bit, case when 1024 = 1024 & [status] then 1 else 0 end)           IsReadOnly
+    ,0																			DataFilesWithoutBackup
+from sysdatabases d
+                "
 
-                    $dbs = $server.Query("
+        $sql2005 = "
 select d.name                           [Database]
     ,d.collation_name                   DatabaseCollation
     ,suser_sname(d.owner_sid)           Owner
@@ -31,14 +51,21 @@ select d.name                           [Database]
     ,d.user_access_desc                 UserAccess
     ,d.is_read_only                     IsReadOnly
     ,(	select count(*) 
-		from sys.master_files
-		where database_id = d.database_id 
-			and [type] = 0
-			and differential_base_lsn is null
-	)                                   DataFilesWithoutBackup
+        from sys.master_files
+        where database_id = d.database_id 
+            and [type] = 0
+            and differential_base_lsn is null
+    )                                   DataFilesWithoutBackup
 from sys.databases d
-$(if($Database) { "where name like '$($Database.Replace("*","%"))'"})
-                                        ")
+        "
+        
+
+        foreach ($instance in $SqlInstance) {
+            try {
+                if (!($script:results.ContainsKey($instance))) {
+                    $server = Connect-DbaInstance -SqlInstance $instance -SqlCredential $sqlcredential
+
+                    $dbs = $server.Query("$sql2005$(if($Database) { " where name like '$($Database.Replace("*","%"))'"})")
 
                     foreach($db in $dbs) {
                         $db | Add-Member -Force -MemberType NoteProperty -Name InstanceCollation -Value $server.Collation
