@@ -1,5 +1,10 @@
 $filename = $MyInvocation.MyCommand.Name.Replace(".Tests.ps1", "")
 
+. "$PSScriptRoot/../internal/functions/Get-InstanceConfig.ps1"
+
+# dot source the assertion files
+@(Get-ChildItem "$PSScriptRoot/../confirms/$filename.*.ps1").ForEach{ . $psItem.FullName }
+
 Describe "SQL Engine Service" -Tags SqlEngineServiceAccount, ServiceAccount, $filename {
     @(Get-Instance).ForEach{
         Context "Testing SQL Engine Service on $psitem" {
@@ -199,11 +204,12 @@ Describe "SA Login Renamed" -Tags SaRenamed, DISA, $filename {
 }
 
 Describe "Default Backup Compression" -Tags DefaultBackupCompression, $filename {
-    $defaultbackupcompression = Get-DbcConfigValue policy.backup.defaultbackupcompression
+    $settings = Get-ConfigForDefaultBackupCompressionCheck
     @(Get-Instance).ForEach{
         Context "Testing Default Backup Compression on $psitem" {
-            It "Default Backup Compression is set to $defaultbackupcompression on $psitem" {
-                (Get-DbaSpConfigure -SqlInstance $psitem -ConfigName 'DefaultBackupCompression').ConfiguredValue -eq 1 | Should -Be $defaultbackupcompression -Because 'The default backup compression should be set correctly'
+            It "Default Backup Compression is set to $($settings.DefaultBackupCompression) on $psitem" {
+                (Get-InstanceConfig -SqlInstance $psitem -ConfigName "DefaultBackupCompression") |
+                Confirm-BackupCompression -With $settings -Because "The default backup compression should be set to $($settings.DefaultBackupCompression)"
             }
         }
     }
